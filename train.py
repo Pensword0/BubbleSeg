@@ -13,16 +13,9 @@ from trainer import Trainer
 import time
 
 def get_instance(module, name, config, *args):
-    # 这个函数用于动态创建类实例或调用函数。它使用 getattr 来获取指定模块中的类或函数，并使用配置文件中提供的参数来初始化
     return getattr(module, config[name]['type'])(*args, **config[name]['args'])
 
 def main(config, resume):
-    # 这句代码 train_logger = Logger() 的意义是创建 Logger 类的一个实例，并将这个实例赋值给变量 train_logger。这个实例将用于记录和管理与训练过程相关的日志信息。
-    # 具体来说：Logger()：这是调用 Logger 类的构造函数（即 __init__ 方法）。
-    # 它会创建一个新的 Logger 对象。根据之前的代码，这个对象内部会有一个名为 entries 的空字典，用于存储日志条目。
-    # train_logger：这是一个变量，用于引用新创建的 Logger 对象。
-    # 通过这个变量，你可以访问 Logger 类定义的方法和属性，例如使用 train_logger.add_entry(some_entry) 来添加日志条目，或者使用 print(train_logger) 来打印当前所有的日志条目。
-    # 这种方式在编写需要记录和追踪训练过程的信息时非常有用，比如记录训练损失、准确率、模型参数调整等。通过使用自定义的 Logger 类，你可以灵活地控制日志的记录方式和格式。
     train_logger = Logger()
 
     # DATA LOADERS
