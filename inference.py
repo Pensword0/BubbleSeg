@@ -80,17 +80,21 @@ def multi_scale_predict(model, image, scales, num_classes, device, flip=False):
 
 
 def save_images(image, mask, output_path, image_file, palette):
-	# Saves the image, the model output and the result after the post processing
-    w, h = image.size
     image_file = os.path.basename(image_file).split('.')[0]
+
+    mask_dir = os.path.join(output_path, 'masks')
+    overlay_dir = os.path.join(output_path, 'overlays')
+    os.makedirs(mask_dir, exist_ok=True)
+    os.makedirs(overlay_dir, exist_ok=True)
+
     colorized_mask = colorize_mask(mask, palette)
-    colorized_mask.save(os.path.join(output_path, image_file+'.png'))
-    output_im = Image.new('RGB', (w*2, h))
-    output_im.paste(image, (0,0))
-    output_im.paste(colorized_mask, (w,0))
-    output_im.save(os.path.join(output_path, image_file+'_colorized.png'))
-    mask_img = Image.fromarray(mask, 'RGB')
-    mask_img.save(os.path.join(output_path, image_file+'.png'))
+    colorized_mask.save(os.path.join(mask_dir, image_file + '_mask.png'))
+
+    w, h = image.size
+    overlay = Image.new('RGB', (w * 2, h))
+    overlay.paste(image, (0, 0))
+    overlay.paste(colorized_mask, (w, 0))
+    overlay.save(os.path.join(overlay_dir, image_file + '_overlay.png'))
 
 def main():
     args = parse_arguments()
@@ -115,10 +119,8 @@ def main():
     device = torch.device('cuda:0' if len(availble_gpus) > 0 else 'cpu')
 
     # Load checkpoint
-    print('111')
     print(device)
     checkpoint = torch.load(args.model, map_location=device)
-    print('222')
     if isinstance(checkpoint, dict) and 'state_dict' in checkpoint.keys():
         checkpoint = checkpoint['state_dict']
     # If during training, we used data parallel
@@ -141,7 +143,7 @@ def main():
     if not os.path.exists('outputs'):
         os.makedirs('outputs')
 
-    image_files = sorted(glob(os.path.join(args.images, f'*.{args.extension}')))
+    image_files = sorted(glob(os.path.join(args.test, f'*.{args.extension}')))
     with torch.no_grad():
         tbar = tqdm(image_files, ncols=100)
         for img_file in tbar:
@@ -160,13 +162,13 @@ def main():
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Inference')
-    parser.add_argument('-c', '--config', default='VOC',type=str,
+    parser.add_argument('-c', '--config', default='./pth/config.json',type=str,
                         help='The config used to train the model')
     parser.add_argument('-mo', '--mode', default='multiscale', type=str,
                         help='Mode used for prediction: either [multiscale, sliding]')
-    parser.add_argument('-m', '--model', default='model_weights.pth', type=str,
+    parser.add_argument('-m', '--model', default='./pth/best_model.pth', type=str,
                         help='Path to the .pth model checkpoint to be used in the prediction')
-    parser.add_argument('-i', '--images', default=None, type=str,
+    parser.add_argument('-t', '--test', default=None, type=str,
                         help='Path to the images to be segmented')
     parser.add_argument('-o', '--output', default='outputs', type=str,  
                         help='Output Path')
